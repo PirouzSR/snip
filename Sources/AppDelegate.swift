@@ -102,6 +102,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func showMainWindow() {
+        // Keep the window in sync with the menu-bar preview: if a recent snip exists but the
+        // window isn't showing one (e.g. it was a silent capture), restore it before sizing.
+        appState.restoreLastCaptureIfNeeded()
         makeMainPanelIfNeeded()
         applyWindowLevel()
         mainPanel?.makeKeyAndOrderFront(nil)

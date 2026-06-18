@@ -52,6 +52,21 @@ final class AppState {
         return lastCapturePreview
     }
 
+    /// Re-populates the main-window preview from the most recent snip when it isn't already
+    /// showing one. After a silent capture we drop the full-resolution `currentImage` to save
+    /// memory but keep `lastCapturePreview` for the menu bar; this rehydrates the window so
+    /// both surfaces always display the same "last taken" snip. No-op once the user clears it
+    /// (which also clears `lastCapturePreview`).
+    func restoreLastCaptureIfNeeded() {
+        guard previewKind == nil, lastCapturePreview != nil,
+              let image = latestFullResImage() else { return }
+        currentImage = image
+        currentVideoURL = nil
+        previewKind = .image
+        markupActive = false
+        currentCaptureURL = history.items.first(where: { $0.kind == .image })?.fileURL
+    }
+
     // Transient UI state
     var isCapturing = false
     var countdownValue: Int?

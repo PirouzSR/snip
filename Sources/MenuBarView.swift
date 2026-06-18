@@ -76,12 +76,12 @@ struct MenuBarView: View {
 
     private var commands: some View {
         VStack(spacing: 1) {
-            MenuRow(title: "New Snip", symbol: "camera", shortcut: "⌘⇧4") {
+            MenuRow(title: "New Snip", symbol: "camera") {
                 dismiss(); state.mode = .snip
                 state.beginSnip(shape: state.shape, timer: state.timer)
             }
             MenuRow(title: state.isRecording ? "Stop Recording" : "New Recording",
-                    symbol: state.isRecording ? "stop.circle" : "record.circle", shortcut: "⌘⇧R") {
+                    symbol: state.isRecording ? "stop.circle" : "record.circle") {
                 dismiss(); state.mode = .record; state.toggleRecording()
             }
             Divider().padding(.vertical, 3)
