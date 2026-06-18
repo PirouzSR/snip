@@ -45,6 +45,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showOnboarding()
         }
 
+        // SwiftUI builds its CommandMenu items after this method returns and re-syncs the
+        // menu bar on later run-loop passes, so we re-assert the order across the launch
+        // window and (via the menu delegate) whenever the menu bar updates afterwards.
+        scheduleMenuReorder()
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        scheduleMenuReorder()
+    }
+
+    /// Re-asserts the File-menu position over the first couple of seconds (to beat SwiftUI's
+    /// late menu sync) and installs the main-menu delegate for ongoing correction.
+    private func scheduleMenuReorder() {
+        NSApp.mainMenu?.delegate = self
+        reorderMainMenuNow()
+        for delay in [0.05, 0.15, 0.3, 0.6, 1.0, 1.5] {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.reorderMainMenuNow()
+            }
+        }
+    }
+
+    /// Moves the custom "File" menu directly after the application menu, in front of the
+    /// AppKit-supplied Edit/View menus. `items[0]` is the app menu (the Apple menu is
+    /// system-managed and not in this array), so the first regular slot is index 1.
+    private func reorderMainMenuNow() {
+        guard let mainMenu = NSApp.mainMenu,
+              let fileItem = mainMenu.items.first(where: { $0.title == "File" }) else { return }
+        let target = 1
+        let idx = mainMenu.index(of: fileItem)
+        guard idx >= 0, idx != target else { return }
+        mainMenu.removeItem(at: idx)
+        mainMenu.insertItem(fileItem, at: min(target, mainMenu.items.count))
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -228,6 +261,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    // MARK: Folders (File menu)
+
+    func openScreenshotsFolder() { NSWorkspace.shared.open(appState.settings.saveDirectory) }
+    func openVideosFolder() { NSWorkspace.shared.open(appState.settings.videoDirectory) }
+
     // MARK: History window
 
     func showHistoryWindow() {
@@ -240,6 +278,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.center()
             historyWindow = window
         }
+        appState.history.pruneDeletedFiles()
         historyWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -302,5 +341,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         KeyboardShortcuts.onKeyUp(for: .repeatLastCapture) { [weak self] in
             self?.appState.repeatLast()
         }
+    }
+}
+
+extension AppDelegate: NSMenuDelegate {
+    /// Keeps the File menu first even if SwiftUI rebuilds the menu bar after launch.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu === NSApp.mainMenu else { return }
+        reorderMainMenuNow()
     }
 }

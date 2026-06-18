@@ -11,9 +11,20 @@ final class AppState {
     let history = HistoryStore.shared
     let recorder = RecordingEngine()
     private let countdownOverlay = CountdownOverlay()
+    private let boundsOverlay = RecordingBoundsOverlay()
 
-    var mode: CaptureMode = .snip
-    var shape: CaptureShape
+    var mode: CaptureMode = .snip {
+        didSet { shape = mode == .snip ? snipShape : recordShape }
+    }
+    // Per-mode shapes so switching modes restores each mode's last-used shape.
+    private(set) var snipShape: CaptureShape
+    private(set) var recordShape: CaptureShape
+    var shape: CaptureShape {
+        didSet {
+            if mode == .snip { snipShape = shape; settings.defaultShape = shape }
+            else { recordShape = shape; settings.defaultRecordShape = shape }
+        }
+    }
     var timer: TimerDelay
 
     // Preview state
@@ -68,7 +79,9 @@ final class AppState {
 
     init() {
         let s = AppSettings.shared
-        shape = s.defaultShape
+        snipShape = s.defaultShape
+        recordShape = s.defaultRecordShape
+        shape = s.defaultShape   // start in snip mode
         timer = s.defaultTimer
         recorder.onStop = { [weak self] url in self?.handleRecordingStopped(url) }
         recorder.onError = { [weak self] err in
@@ -239,11 +252,15 @@ final class AppState {
         let scale = NSScreen.main?.backingScaleFactor ?? 2
         switch result {
         case .region(let rect, let screen, _):
-            await startRecording(region: rect.standardizedNonNegative, windowID: nil,
+            let r = rect.standardizedNonNegative
+            await startRecording(region: r, windowID: nil,
                                  displayID: screen.displayID, scale: screen.backingScaleFactor)
+            if isRecording { boundsOverlay.show(localRect: r, on: screen) }
         case .freeform(_, let bounds, let screen, _):
-            await startRecording(region: bounds.standardizedNonNegative, windowID: nil,
+            let r = bounds.standardizedNonNegative
+            await startRecording(region: r, windowID: nil,
                                  displayID: screen.displayID, scale: screen.backingScaleFactor)
+            if isRecording { boundsOverlay.show(localRect: r, on: screen) }
         case .window(let window, _):
             await startRecording(region: nil, windowID: window.windowID,
                                  displayID: CGMainDisplayID(), scale: scale)
@@ -297,6 +314,7 @@ final class AppState {
     private func handleRecordingStopped(_ url: URL?) {
         isRecording = false
         stopRecordingTimer()
+        boundsOverlay.dismiss()
         if cancellingRecording {
             cancellingRecording = false
             if let url { try? FileManager.default.removeItem(at: url) }
@@ -363,6 +381,13 @@ final class AppState {
         currentImage = image
         previewKind = .image
         presentSavePanel()
+    }
+
+    func shareLastCapture() {
+        guard let image = latestFullResImage(),
+              let view = NSApp.keyWindow?.contentView else { return }
+        let picker = NSSharingServicePicker(items: [image])
+        picker.show(relativeTo: .zero, of: view, preferredEdge: .minY)
     }
 
     // MARK: Preview actions

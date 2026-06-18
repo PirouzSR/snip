@@ -17,6 +17,11 @@ struct SnipApp: App {
                 Button("Settings…") { AppDelegate.shared?.openSettingsWindow() }
                     .keyboardShortcut(",", modifiers: .command)
             }
+            CommandMenu("File") {
+                Button("Open Screenshots Folder") { AppDelegate.shared?.openScreenshotsFolder() }
+                    .keyboardShortcut("o", modifiers: [.command, .shift])
+                Button("Open Video Captures Folder") { AppDelegate.shared?.openVideosFolder() }
+            }
         }
     }
 }

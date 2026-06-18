@@ -82,6 +82,18 @@ final class HistoryStore {
         save()
     }
 
+    /// Removes history entries whose backing file no longer exists on disk.
+    func pruneDeletedFiles() {
+        let before = items.count
+        items.removeAll { item in
+            guard let url = item.fileURL else { return false }
+            let missing = !fm.fileExists(atPath: url.path)
+            if missing, let t = item.thumbnailURL { try? fm.removeItem(at: t) }
+            return missing
+        }
+        if items.count != before { save() }
+    }
+
     /// Removes the thumbnail and any internally-owned full-resolution copy (not user files).
     private func removeFiles(for item: CaptureItem) {
         if let t = item.thumbnailURL { try? fm.removeItem(at: t) }
@@ -114,6 +126,7 @@ final class HistoryStore {
         guard let data = try? Data(contentsOf: metadataURL),
               let decoded = try? JSONDecoder().decode([CaptureItem].self, from: data) else { return }
         items = decoded
+        pruneDeletedFiles()
     }
 
     private func save() {

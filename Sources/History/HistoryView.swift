@@ -40,6 +40,7 @@ struct HistoryView: View {
                 }
             }
         }
+        .onAppear { state.history.pruneDeletedFiles() }
     }
 }
 

@@ -21,6 +21,7 @@
 		55D443814E0E14BCFB7DDC38 /* SelectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 798132BD6423122B89CD77ED /* SelectionView.swift */; };
 		6001B8B969CE58383362248A /* MainWindowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 826E4DD8A1CC6D4222A5428E /* MainWindowView.swift */; };
 		61E410FADB3085914D83B4A6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 02DDFDC165C1A4F11CA223B4 /* Assets.xcassets */; };
+		6E06E046BB1746BD62FDE13A /* RecordingBoundsOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64743DCDF352CB180DEF574D /* RecordingBoundsOverlay.swift */; };
 		74BED5852A02FF1A5651F4D6 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = ED0446E85DF4E676CBEA6D42 /* KeyboardShortcuts */; };
 		9C13E088B28B00F37CD4C697 /* ToolbarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B16231B6A6EA081D34A2DE /* ToolbarView.swift */; };
 		9E48C037E731B8C311D4D0F3 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6391A0CE22160D07AA2865CF /* AppSettings.swift */; };
@@ -52,6 +53,7 @@
 		59CEE698C3F06C348E2AB8C3 /* ShortcutsPane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutsPane.swift; sourceTree = "<group>"; };
 		631F9536D7233C8282FA6169 /* Shortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Shortcuts.swift; sourceTree = "<group>"; };
 		6391A0CE22160D07AA2865CF /* AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettings.swift; sourceTree = "<group>"; };
+		64743DCDF352CB180DEF574D /* RecordingBoundsOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingBoundsOverlay.swift; sourceTree = "<group>"; };
 		761D356173B57703FFC16B28 /* ImageAnnotator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageAnnotator.swift; sourceTree = "<group>"; };
 		78641A1091126C9C88161364 /* LoginItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItem.swift; sourceTree = "<group>"; };
 		798132BD6423122B89CD77ED /* SelectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionView.swift; sourceTree = "<group>"; };
@@ -118,6 +120,7 @@
 				C9261A76F7B1255E91A8EBDC /* MenuBarView.swift */,
 				F32F91885A5B3932869C7033 /* OnboardingView.swift */,
 				DFD7E208B03878E6B6C8A824 /* OverlayWindow.swift */,
+				64743DCDF352CB180DEF574D /* RecordingBoundsOverlay.swift */,
 				045D676A4A8D43588F946741 /* RecordingControlBar.swift */,
 				06151F6CC5A67221B9CE8645 /* RecordingEngine.swift */,
 				798132BD6423122B89CD77ED /* SelectionView.swift */,
@@ -259,6 +262,7 @@
 				129E1704087216DBC8E62C23 /* OnboardingView.swift in Sources */,
 				5261DB4810945A733E1FC53D /* OverlayWindow.swift in Sources */,
 				AD33EFA36C6AE8D72FF4BC04 /* PreviewView.swift in Sources */,
+				6E06E046BB1746BD62FDE13A /* RecordingBoundsOverlay.swift in Sources */,
 				C3A3ABF80BC72108C12DC6D8 /* RecordingControlBar.swift in Sources */,
 				CB732C3294DD3AA2120687E3 /* RecordingEngine.swift in Sources */,
 				55D443814E0E14BCFB7DDC38 /* SelectionView.swift in Sources */,

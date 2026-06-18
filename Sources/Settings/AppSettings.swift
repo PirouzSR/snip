@@ -30,6 +30,7 @@ final class AppSettings {
     // MARK: Behavior
     var countdownStyle: CountdownStyle { didSet { persist(countdownStyle.rawValue, "countdownStyle") } }
     var defaultShape: CaptureShape { didSet { persist(defaultShape.rawValue, "defaultShape") } }
+    var defaultRecordShape: CaptureShape { didSet { persist(defaultRecordShape.rawValue, "defaultRecordShape") } }
     var defaultTimer: TimerDelay { didSet { persist(defaultTimer.rawValue, "defaultTimer") } }
     var playSound: Bool { didSet { persist(playSound, "playSound") } }
     var showPreview: ShowPreviewPolicy { didSet { persist(showPreview.rawValue, "showPreview") } }
@@ -55,6 +56,7 @@ final class AppSettings {
             "frameRate": FrameRate.fps60.rawValue,
             "countdownStyle": CountdownStyle.fullScreenDim.rawValue,
             "defaultShape": CaptureShape.rectangle.rawValue,
+            "defaultRecordShape": CaptureShape.fullScreen.rawValue,
             "defaultTimer": TimerDelay.none.rawValue,
             "showPreview": ShowPreviewPolicy.whenRecording.rawValue,
             "saveHistory": true,
@@ -81,6 +83,7 @@ final class AppSettings {
 
         countdownStyle = CountdownStyle(rawValue: d.string(forKey: "countdownStyle") ?? "") ?? .fullScreenDim
         defaultShape = CaptureShape(rawValue: d.string(forKey: "defaultShape") ?? "") ?? .rectangle
+        defaultRecordShape = CaptureShape(rawValue: d.string(forKey: "defaultRecordShape") ?? "") ?? .fullScreen
         defaultTimer = TimerDelay(rawValue: d.integer(forKey: "defaultTimer")) ?? .none
         playSound = d.bool(forKey: "playSound")
         showPreview = ShowPreviewPolicy(rawValue: d.string(forKey: "showPreview") ?? "") ?? .whenRecording
@@ -125,6 +128,18 @@ final class AppSettings {
         let pictures = fm.urls(for: .picturesDirectory, in: .userDomainMask).first
             ?? fm.homeDirectoryForCurrentUser.appendingPathComponent("Pictures")
         let dir = pictures.appendingPathComponent("Screenshots", isDirectory: true)
+        if !fm.fileExists(atPath: dir.path) {
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        return dir
+    }
+
+    /// ~/Movies/Captures, created if missing. (Matches RecordingEngine's output folder.)
+    var videoDirectory: URL {
+        let fm = FileManager.default
+        let movies = fm.urls(for: .moviesDirectory, in: .userDomainMask).first
+            ?? fm.homeDirectoryForCurrentUser.appendingPathComponent("Movies")
+        let dir = movies.appendingPathComponent("Captures", isDirectory: true)
         if !fm.fileExists(atPath: dir.path) {
             try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         }

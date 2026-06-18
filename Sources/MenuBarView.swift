@@ -18,15 +18,26 @@ struct MenuBarView: View {
 
     // MARK: Preview
 
+    /// Fills the popover content width (300 − 20 padding) at the image's aspect ratio,
+    /// capping height for very tall portrait captures.
+    private func previewSize(for image: NSImage) -> CGSize {
+        let maxW: CGFloat = 280
+        let maxH: CGFloat = 300
+        let aspect = image.size.width / max(image.size.height, 1)
+        var w = maxW
+        var h = maxW / aspect
+        if h > maxH { h = maxH; w = maxH * aspect }
+        return CGSize(width: w, height: h)
+    }
+
     @ViewBuilder
     private var previewSection: some View {
         if let image = state.lastCapturePreview {
             VStack(spacing: 8) {
+                let size = previewSize(for: image)
                 Image(nsImage: image)
                     .resizable()
-                    .aspectRatio(image.size, contentMode: .fit)
-                    .frame(maxWidth: .infinity)
-                    .frame(maxHeight: 360)
+                    .frame(width: size.width, height: size.height)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.primary.opacity(0.12)))
 
@@ -34,6 +45,7 @@ struct MenuBarView: View {
                     quickButton("Copy", "doc.on.doc") { state.copyLastCapture(); dismiss() }
                     quickButton("Edit", "pencil.and.outline") { dismiss(); state.editLastCapture() }
                     quickButton("Save", "square.and.arrow.down") { dismiss(); state.saveLastCapture() }
+                    quickButton("Share", "square.and.arrow.up") { state.shareLastCapture() }
                 }
             }
             .padding(10)

@@ -29,16 +29,12 @@ struct ToolbarView: View {
         .frame(maxHeight: .infinity)
     }
 
+    // Branding collapses to just the icon so the "+ New" button keeps its full label.
     private var branding: some View {
-        HStack(spacing: 6) {
-            Image(systemName: "camera.viewfinder")
-                .font(.system(size: 16))
-                .foregroundStyle(.tint)
-            Text("Snip")
-                .font(.system(size: 14, weight: .medium, design: .rounded))
-                .foregroundStyle(.primary)
-        }
-        .accessibilityHidden(true)
+        Image(systemName: "camera.viewfinder")
+            .font(.system(size: 16))
+            .foregroundStyle(.tint)
+            .accessibilityHidden(true)
     }
 }
 
@@ -56,12 +52,13 @@ private struct NewButton: View {
                 } else {
                     Image(systemName: state.mode == .record && state.isRecording ? "stop.fill" : "plus")
                         .font(.system(size: 12, weight: .semibold))
-                    Text(label).font(.system(size: 13, weight: .semibold))
+                    Text(label).font(.system(size: 13, weight: .semibold)).lineLimit(1)
                 }
             }
             .padding(.horizontal, 12).padding(.vertical, 6)
         }
         .buttonStyle(.borderedProminent)
+        .fixedSize()
         .clipShape(RoundedRectangle(cornerRadius: 9))
         // Red only while actively recording in Record mode; always accent in Snip mode.
         .tint(state.mode == .record && state.isRecording ? .red : .accentColor)
