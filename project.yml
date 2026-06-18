@@ -38,7 +38,7 @@ targets:
         LSApplicationCategoryType: public.app-category.utilities
         LSUIElement: false
         NSMicrophoneUsageDescription: "Snip records microphone audio when you include narration in a screen recording."
-        NSHumanReadableCopyright: "Copyright © 2026. All rights reserved."
+        NSHumanReadableCopyright: "Copyright © 2026 Pirouz Ruppert. MIT Licensed."
         NSPrincipalClass: NSApplication
         NSHighResolutionCapable: true
     entitlements:
