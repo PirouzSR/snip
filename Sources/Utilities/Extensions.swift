@@ -33,20 +33,13 @@ extension NSImage {
 
     func pngData() -> Data? { bitmapData(for: .png) }
 
-    /// Returns a downscaled copy whose longest side is at most `maxDimension` points.
-    /// Used to keep a lightweight preview resident instead of a full-resolution bitmap.
+    /// Returns a downscaled copy whose longest side is at most `maxDimension` pixels, drawn
+    /// once through a CoreGraphics context. Used to keep a lightweight preview resident
+    /// instead of a full-resolution bitmap. Unlike `lockFocus`, this produces deterministic
+    /// pixel dimensions (no surprise 2× Retina backing), so the retained copy stays small.
     func downscaled(maxDimension: CGFloat) -> NSImage {
-        let longest = max(size.width, size.height)
-        guard longest > maxDimension, longest > 0 else { return self }
-        let scale = maxDimension / longest
-        let target = NSSize(width: (size.width * scale).rounded(), height: (size.height * scale).rounded())
-        let scaled = NSImage(size: target)
-        scaled.lockFocus()
-        NSGraphicsContext.current?.imageInterpolation = .high
-        draw(in: NSRect(origin: .zero, size: target),
-             from: NSRect(origin: .zero, size: size), operation: .copy, fraction: 1)
-        scaled.unlockFocus()
-        return scaled
+        guard let cg = cgImage, let scaled = cg.resized(maxPixels: maxDimension) else { return self }
+        return NSImage(cgImage: scaled, size: NSSize(width: scaled.width, height: scaled.height))
     }
 
     func data(for format: ImageFormat, jpegQuality: Double = 0.9) -> Data? {
@@ -74,6 +67,27 @@ extension NSImage {
         CGImageDestinationAddImage(dest, cg, [kCGImageDestinationLossyCompressionQuality: quality] as CFDictionary)
         guard CGImageDestinationFinalize(dest) else { return nil }
         return data as Data
+    }
+}
+
+// MARK: - CGImage downscaling
+
+extension CGImage {
+    /// Returns a copy scaled so its longest side is at most `maxPixels`, preserving aspect
+    /// ratio; returns `self` when already within bounds. A single `CGContext` draw avoids the
+    /// offscreen window backing — and the ambiguous backing scale — of `NSImage.lockFocus`.
+    func resized(maxPixels: CGFloat) -> CGImage? {
+        let longest = CGFloat(max(width, height))
+        guard longest > maxPixels, longest > 0 else { return self }
+        let ratio = maxPixels / longest
+        let w = max(Int((CGFloat(width) * ratio).rounded()), 1)
+        let h = max(Int((CGFloat(height) * ratio).rounded()), 1)
+        guard let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8,
+                                  bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        ctx.interpolationQuality = .high
+        ctx.draw(self, in: CGRect(x: 0, y: 0, width: w, height: h))
+        return ctx.makeImage()
     }
 }
 

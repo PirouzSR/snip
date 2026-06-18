@@ -63,11 +63,12 @@ struct MenuBarView: View {
 
     private func quickButton(_ title: String, _ symbol: String, _ run: @escaping () -> Void) -> some View {
         Button(action: run) {
-            Label(title, systemImage: symbol)
+            Image(systemName: symbol)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 4)
         }
         .buttonStyle(.bordered)
+        .help(title)
         .accessibilityLabel(title)
     }
 

@@ -397,12 +397,14 @@ final class AppState {
         else if let url = currentVideoURL { Clipboard.copy(fileURL: url) }
     }
 
-    /// Clear: remove the snapshot from the app preview only. The saved file and history stay.
+    /// Clear: remove the snapshot from the app preview and the menu-bar preview. The saved
+    /// file and history stay.
     func discardCurrent() {
         currentImage = nil
         currentVideoURL = nil
         currentCaptureURL = nil
         previewKind = nil
+        lastCapturePreview = nil   // keep the menu-bar preview in sync with the main window
         markupActive = false
     }
 

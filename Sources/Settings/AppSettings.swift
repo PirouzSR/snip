@@ -19,6 +19,7 @@ final class AppSettings {
 
     // MARK: Output
     var saveLocationBookmark: Data? { didSet { defaults.set(saveLocationBookmark, forKey: "saveLocationBookmark") } }
+    var videoSaveLocationBookmark: Data? { didSet { defaults.set(videoSaveLocationBookmark, forKey: "videoSaveLocationBookmark") } }
     var autoSave: Bool { didSet { persist(autoSave, "autoSave") } }
     var filenameTemplate: String { didSet { persist(filenameTemplate, "filenameTemplate") } }
     var imageFormat: ImageFormat { didSet { persist(imageFormat.rawValue, "imageFormat") } }
@@ -73,6 +74,7 @@ final class AppSettings {
         menuBarPresence = MenuBarPresence(rawValue: d.string(forKey: "menuBarPresence") ?? "") ?? .dockAndMenuBar
 
         saveLocationBookmark = d.data(forKey: "saveLocationBookmark")
+        videoSaveLocationBookmark = d.data(forKey: "videoSaveLocationBookmark")
         autoSave = d.bool(forKey: "autoSave")
         filenameTemplate = d.string(forKey: "filenameTemplate") ?? "Snip {date} {time}"
         imageFormat = ImageFormat(rawValue: d.string(forKey: "imageFormat") ?? "") ?? .png
@@ -134,8 +136,20 @@ final class AppSettings {
         return dir
     }
 
-    /// ~/Movies/Captures, created if missing. (Matches RecordingEngine's output folder.)
+    /// Resolves the chosen video save directory, defaulting to ~/Movies/Captures.
     var videoDirectory: URL {
+        if let bookmark = videoSaveLocationBookmark {
+            var stale = false
+            if let url = try? URL(resolvingBookmarkData: bookmark, options: [],
+                                  relativeTo: nil, bookmarkDataIsStale: &stale) {
+                return url
+            }
+        }
+        return defaultVideoDirectory
+    }
+
+    /// ~/Movies/Captures, created if missing.
+    var defaultVideoDirectory: URL {
         let fm = FileManager.default
         let movies = fm.urls(for: .moviesDirectory, in: .userDomainMask).first
             ?? fm.homeDirectoryForCurrentUser.appendingPathComponent("Movies")
@@ -150,14 +164,24 @@ final class AppSettings {
         saveLocationBookmark = try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
     }
 
+    func setVideoSaveDirectory(_ url: URL) {
+        videoSaveLocationBookmark = try? url.bookmarkData(options: [], includingResourceValuesForKeys: nil, relativeTo: nil)
+    }
+
+    // Reused across captures — `DateFormatter` is costly to construct each call.
+    private static let dateFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"; return f
+    }()
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter(); f.dateFormat = "HH-mm-ss"; return f
+    }()
+
     /// Builds a filename (without extension) from the template tokens.
     func resolvedFilename(mode: String) -> String {
         let now = Date()
-        let dateFmt = DateFormatter(); dateFmt.dateFormat = "yyyy-MM-dd"
-        let timeFmt = DateFormatter(); timeFmt.dateFormat = "HH-mm-ss"
         var name = filenameTemplate
-        name = name.replacingOccurrences(of: "{date}", with: dateFmt.string(from: now))
-        name = name.replacingOccurrences(of: "{time}", with: timeFmt.string(from: now))
+        name = name.replacingOccurrences(of: "{date}", with: Self.dateFormatter.string(from: now))
+        name = name.replacingOccurrences(of: "{time}", with: Self.timeFormatter.string(from: now))
         name = name.replacingOccurrences(of: "{index}", with: String(captureIndex))
         name = name.replacingOccurrences(of: "{mode}", with: mode)
         let trimmed = name.trimmingCharacters(in: .whitespaces)

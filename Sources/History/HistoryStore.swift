@@ -153,16 +153,11 @@ final class HistoryStore {
     // MARK: Thumbnails
 
     private func writeThumbnail(_ image: NSImage, id: UUID) -> URL? {
-        let maxDim: CGFloat = 480
-        let size = image.size
-        let scale = min(1, maxDim / max(size.width, size.height))
-        let target = NSSize(width: size.width * scale, height: size.height * scale)
-        let thumb = NSImage(size: target)
-        thumb.lockFocus()
-        image.draw(in: NSRect(origin: .zero, size: target),
-                   from: NSRect(origin: .zero, size: size),
-                   operation: .copy, fraction: 1)
-        thumb.unlockFocus()
+        // Resize from the backing pixels (not `image.size`), so video posters created with a
+        // zero point-size still produce a real thumbnail rather than a 0×0 image.
+        guard let cg = image.cgImage else { return nil }
+        let thumbCG = cg.resized(maxPixels: 480) ?? cg
+        let thumb = NSImage(cgImage: thumbCG, size: NSSize(width: thumbCG.width, height: thumbCG.height))
         guard let data = thumb.pngData() else { return nil }
         let url = thumbsDir.appendingPathComponent("\(id.uuidString).png")
         try? data.write(to: url, options: .atomic)

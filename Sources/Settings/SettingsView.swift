@@ -51,7 +51,7 @@ struct OutputPane: View {
 
     var body: some View {
         Form {
-            Section {
+            Section("Images") {
                 HStack {
                     Text("Save location")
                     Spacer()
@@ -59,16 +59,7 @@ struct OutputPane: View {
                         .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
                     Button("Choose…") { chooseFolder() }
                 }
-                Toggle("Auto-save captures", isOn: $settings.autoSave)
-                VStack(alignment: .leading, spacing: 4) {
-                    TextField("File naming", text: $settings.filenameTemplate)
-                    Text("Preview: \(settings.resolvedFilename(mode: "snip")).\(settings.imageFormat.fileExtension)")
-                        .font(.caption).foregroundStyle(.secondary)
-                    Text("Tokens: {date} {time} {index} {mode}")
-                        .font(.caption2).foregroundStyle(.tertiary)
-                }
-            }
-            Section("Image") {
+                Toggle("Auto-save screenshots", isOn: $settings.autoSave)
                 Picker("Format", selection: $settings.imageFormat) {
                     ForEach(ImageFormat.allCases) { Text($0.title).tag($0) }
                 }.pickerStyle(.segmented)
@@ -80,7 +71,14 @@ struct OutputPane: View {
                     }
                 }
             }
-            Section("Video") {
+            Section("Videos") {
+                HStack {
+                    Text("Save location")
+                    Spacer()
+                    Text(settings.videoDirectory.path(percentEncoded: false))
+                        .foregroundStyle(.secondary).lineLimit(1).truncationMode(.middle)
+                    Button("Choose…") { chooseVideoFolder() }
+                }
                 Picker("Format", selection: $settings.videoFormat) {
                     ForEach(VideoFormat.allCases) { Text($0.title).tag($0) }
                 }.pickerStyle(.segmented)
@@ -90,6 +88,20 @@ struct OutputPane: View {
                 Picker("Frame rate", selection: $settings.frameRate) {
                     ForEach(FrameRate.allCases) { Text($0.title).tag($0) }
                 }.pickerStyle(.segmented)
+            }
+            Section {
+                TextField("Name pattern", text: $settings.filenameTemplate)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Screenshot: \(settings.resolvedFilename(mode: "snip")).\(settings.imageFormat.fileExtension)")
+                    Text("Recording: \(settings.resolvedFilename(mode: "recording")).\(settings.videoFormat.fileExtension)")
+                }
+                .font(.caption).foregroundStyle(.secondary)
+                Text("Tokens: {date} {time} {index} {mode}")
+                    .font(.caption2).foregroundStyle(.tertiary)
+            } header: {
+                Text("File Naming")
+            } footer: {
+                Text("Applies to both screenshots and recordings.")
             }
         }
         .formStyle(.grouped)
@@ -101,6 +113,14 @@ struct OutputPane: View {
         panel.canChooseFiles = false
         panel.allowsMultipleSelection = false
         if panel.runModal() == .OK, let url = panel.url { settings.setSaveDirectory(url) }
+    }
+
+    private func chooseVideoFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        if panel.runModal() == .OK, let url = panel.url { settings.setVideoSaveDirectory(url) }
     }
 }
 

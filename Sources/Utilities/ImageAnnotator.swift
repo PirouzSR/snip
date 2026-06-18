@@ -81,6 +81,7 @@ struct MarkupView: View {
             canvas
             actionBar
         }
+        .onChange(of: tool) { _, _ in commitText() }   // switching tools finishes any open text box
         .onAppear {
             shiftHeld = NSEvent.modifierFlags.contains(.shift)
             flagsMonitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in
@@ -363,10 +364,13 @@ struct MarkupView: View {
                 .textFieldStyle(.plain)
                 .font(.system(size: annotations[idx].width * 4))
                 .foregroundStyle(annotations[idx].color)
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(.leading)
                 .focused($textFocused)
                 .fixedSize()
-                .position(annotations[idx].start)
+                // Anchor the field's top-left at the tap point so it grows to the right (and
+                // down), keeping the text left-aligned instead of expanding from the center.
+                .offset(x: annotations[idx].start.x, y: annotations[idx].start.y)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .onSubmit { commitText() }
                 .onChange(of: textFocused) { _, focused in if !focused { commitText() } }
         }
@@ -374,6 +378,7 @@ struct MarkupView: View {
 
     private func handleDrawChanged(_ value: DragGesture.Value) {
         guard tool != .text else { return }   // text is placed on tap (ended)
+        if editingTextID != nil { commitText() }   // drawing elsewhere finishes the open text box
         if current == nil {
             var annot = Annotation(tool: tool, colorRGBA: rgba(of: color), width: width)
             annot.start = value.startLocation
@@ -392,7 +397,12 @@ struct MarkupView: View {
 
     private func handleDrawEnded(_ value: DragGesture.Value) {
         if tool == .text {
-            placeText(at: value.location)
+            // Tapping while a box is open deselects/commits it; the next tap starts a new one.
+            if editingTextID != nil {
+                commitText()
+            } else {
+                placeText(at: value.location)
+            }
             return
         }
         if let annot = current {
@@ -578,7 +588,7 @@ private struct AnnotationsLayer: View {
             let text = Text(annot.text)
                 .font(.system(size: annot.width * 4))
                 .foregroundColor(annot.color)
-            ctx.draw(text, at: annot.start, anchor: .center)
+            ctx.draw(text, at: annot.start, anchor: .topLeading)
         case .eraser:
             guard let first = annot.points.first else { return }
             path.move(to: first)

@@ -119,17 +119,13 @@ final class RecordingEngine: NSObject, SCStreamDelegate, SCRecordingOutputDelega
         finishContinuation = nil
     }
 
-    /// ~/Movies/Captures, created if missing.
+    /// The configured video save location (defaults to ~/Movies/Captures), created if missing.
+    /// Names the file with the shared filename template so recordings match screenshots.
     private func makeOutputURL(format: VideoFormat) -> URL {
-        let fm = FileManager.default
-        let movies = fm.urls(for: .moviesDirectory, in: .userDomainMask).first
-            ?? fm.homeDirectoryForCurrentUser.appendingPathComponent("Movies")
-        let dir = movies.appendingPathComponent("Captures", isDirectory: true)
-        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-        let stamp = DateFormatter()
-        stamp.dateFormat = "yyyy-MM-dd 'at' HH.mm.ss"
-        let name = "Recording \(stamp.string(from: Date())).\(format.fileExtension)"
-        return dir.appendingPathComponent(name)
+        let dir = AppSettings.shared.videoDirectory
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let name = AppSettings.shared.resolvedFilename(mode: "recording")
+        return dir.appendingPathComponent("\(name).\(format.fileExtension)")
     }
 
     // MARK: SCStreamDelegate
