@@ -19,6 +19,7 @@ final class RecordingEngine: NSObject, SCStreamDelegate, SCRecordingOutputDelega
 
     struct Options {
         var region: CGRect?          // nil = full display, in points top-left relative to display
+        var windowID: CGWindowID?    // non-nil = record this single window instead of a display
         var displayID: CGDirectDisplayID
         var scale: CGFloat
         var showCursor: Bool
@@ -32,15 +33,26 @@ final class RecordingEngine: NSObject, SCStreamDelegate, SCRecordingOutputDelega
         guard !isRecording else { return }
 
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
-        guard let display = content.displays.first(where: { $0.displayID == options.displayID }) else {
-            throw CaptureError.noDisplay
+        // Exclude Snip's own windows (hidden main window + recording HUD) from the recording.
+        let ownApps = content.applications.filter { $0.bundleIdentifier == Bundle.main.bundleIdentifier }
+
+        let filter: SCContentFilter
+        let regionPoints: CGRect
+
+        if let windowID = options.windowID,
+           let window = content.windows.first(where: { $0.windowID == windowID }) {
+            filter = SCContentFilter(desktopIndependentWindow: window)
+            regionPoints = CGRect(origin: .zero, size: window.frame.size)
+        } else {
+            guard let display = content.displays.first(where: { $0.displayID == options.displayID }) else {
+                throw CaptureError.noDisplay
+            }
+            filter = SCContentFilter(display: display, excludingApplications: ownApps, exceptingWindows: [])
+            regionPoints = options.region ?? CGRect(x: 0, y: 0, width: display.width, height: display.height)
         }
 
-        let filter = SCContentFilter(display: display, excludingWindows: [])
         let config = SCStreamConfiguration()
-
-        let regionPoints = options.region ?? CGRect(x: 0, y: 0, width: display.width, height: display.height)
-        if options.region != nil { config.sourceRect = regionPoints }
+        if options.windowID == nil, options.region != nil { config.sourceRect = regionPoints }
         var pixelWidth = Int(regionPoints.width * options.scale)
         var pixelHeight = Int(regionPoints.height * options.scale)
         // Downscale to the chosen quality tier (720p/1080p/1440p) if the native grab is larger.

@@ -47,31 +47,34 @@ private struct CountdownView: View {
     @Bindable var value: CountdownValue
 
     var body: some View {
-        ZStack {
-            if value.style == .fullScreenDim {
-                Color.black.opacity(0.45).ignoresSafeArea()
-            }
-            numberView
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    @ViewBuilder
-    private var numberView: some View {
         if value.style == .fullScreenDim {
-            Text("\(value.number)")
-                .font(.system(size: 160, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-                .contentTransition(.numericText(countsDown: true))
-                .id(value.number)
+            ZStack {
+                Color.black.opacity(0.45).ignoresSafeArea()
+                Text("\(value.number)")
+                    .font(.system(size: 160, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .contentTransition(.numericText(countsDown: true))
+                    .id(value.number)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            Text("\(value.number)")
-                .font(.system(size: 40, weight: .bold, design: .rounded))
+            // Subtle HUD: no dimming, a small pill anchored to the bottom-center.
+            VStack {
+                Spacer()
+                HStack(spacing: 8) {
+                    Image(systemName: "timer").font(.system(size: 16, weight: .semibold))
+                    Text("\(value.number)")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .contentTransition(.numericText(countsDown: true))
+                        .id(value.number)
+                }
                 .foregroundStyle(.primary)
-                .frame(width: 96, height: 96)
-                .glassEffect(.regular, in: .circle)
-                .contentTransition(.numericText(countsDown: true))
-                .id(value.number)
+                .padding(.horizontal, 18).padding(.vertical, 12)
+                .glassEffect(.regular, in: .capsule)
+                .padding(.bottom, 120)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }

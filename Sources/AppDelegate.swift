@@ -15,6 +15,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var popover: NSPopover?
     private var historyWindow: NSWindow?
     private var settingsWindow: NSWindow?
+    private var recordingHUD: NSPanel?
+    private var mainWindowWasVisible = false
 
     private let compactHeight: CGFloat = 116
     private let expandedHeight: CGFloat = 420
@@ -28,11 +30,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         appState.requestShowMainWindow = { [weak self] in self?.showMainWindow() }
         appState.requestActivateApp = { NSApp.activate(ignoringOtherApps: true) }
         appState.isMainWindowVisible = { [weak self] in self?.mainPanel?.isVisible ?? false }
+        appState.requestHideMainWindow = { [weak self] in self?.hideMainWindow() }
+        appState.requestRestoreMainWindow = { [weak self] in self?.restoreMainWindow() }
 
         setupStatusItem()
         registerHotkeys()
         observePreviewChanges()
         observeKeepOnTop()
+        observeRecording()
 
         if appState.settings.hasOnboarded {
             showMainWindow()
@@ -87,12 +92,63 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    // MARK: Recording HUD
+
+    /// Shows/hides the minimal bottom-center recording control bar as recording state changes.
+    private func observeRecording() {
+        withObservationTracking {
+            _ = appState.isRecording
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                guard let self else { return }
+                if self.appState.isRecording { self.showRecordingHUD() } else { self.hideRecordingHUD() }
+                self.observeRecording()
+            }
+        }
+    }
+
+    private func showRecordingHUD() {
+        guard recordingHUD == nil, let screen = NSScreen.main else { return }
+        let size = NSSize(width: 320, height: 56)
+        let panel = NSPanel(contentRect: NSRect(origin: .zero, size: size),
+                            styleMask: [.borderless, .nonactivatingPanel],
+                            backing: .buffered, defer: false)
+        panel.level = .floating
+        panel.backgroundColor = .clear
+        panel.isOpaque = false
+        panel.hasShadow = false
+        panel.isMovableByWindowBackground = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.contentView = NSHostingView(rootView: RecordingControlBar(state: appState))
+        let x = screen.frame.midX - size.width / 2
+        let y = screen.frame.minY + 96
+        panel.setFrameOrigin(NSPoint(x: x, y: y))
+        panel.orderFrontRegardless()
+        recordingHUD = panel
+    }
+
+    private func hideRecordingHUD() {
+        recordingHUD?.orderOut(nil)
+        recordingHUD = nil
+    }
+
     func toggleMainWindow() {
         if let panel = mainPanel, panel.isVisible {
             panel.orderOut(nil)
         } else {
             showMainWindow()
         }
+    }
+
+    /// Hide the main window during a capture so it's never on screen / in the shot.
+    private func hideMainWindow() {
+        mainWindowWasVisible = mainPanel?.isVisible ?? false
+        mainPanel?.orderOut(nil)
+    }
+
+    /// Restore the main window to the visibility it had before the capture.
+    private func restoreMainWindow() {
+        if mainWindowWasVisible { showMainWindow() }
     }
 
     private func observePreviewChanges() {

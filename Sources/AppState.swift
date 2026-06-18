@@ -54,6 +54,13 @@ final class AppState {
     // Window intents handled by the AppDelegate
     var requestShowMainWindow: (() -> Void)?
     var requestActivateApp: (() -> Void)?
+    /// Hide the main window for the duration of a capture (so it's never in the shot).
+    var requestHideMainWindow: (() -> Void)?
+    /// Restore the main window to whatever visibility it had before the capture.
+    var requestRestoreMainWindow: (() -> Void)?
+
+    /// Whether the main window was visible when the current capture session began.
+    private var mainWindowWasVisible = false
 
     var hasPreview: Bool { previewKind != nil }
     /// Observable mirror of the recorder state so SwiftUI updates when recording starts/stops.
@@ -84,29 +91,33 @@ final class AppState {
         guard ensurePermission() else { return }
         guard !OverlayController.shared.isActive, !isCapturing else { return }
         self.shape = shape
-        Task { await runCountdownThenOverlay(shape: shape, delay: timer.rawValue) }
+        Task {
+            await runCountdown(delay: timer.rawValue)
+            presentOverlay(shape: shape)
+        }
     }
 
-    private func runCountdownThenOverlay(shape: CaptureShape, delay: Int) async {
-        if delay > 0 {
-            countdownOverlay.begin(style: settings.countdownStyle, seconds: delay)
-            for remaining in stride(from: delay, through: 1, by: -1) {
-                countdownValue = remaining
-                countdownOverlay.update(seconds: remaining)
-                try? await Task.sleep(for: .seconds(1))
-            }
-            countdownValue = nil
-            countdownOverlay.dismiss()
+    /// Shows the pre-capture countdown (per `countdownStyle`) for `delay` seconds.
+    private func runCountdown(delay: Int) async {
+        guard delay > 0 else { return }
+        countdownOverlay.begin(style: settings.countdownStyle, seconds: delay)
+        for remaining in stride(from: delay, through: 1, by: -1) {
+            countdownValue = remaining
+            countdownOverlay.update(seconds: remaining)
+            try? await Task.sleep(for: .seconds(1))
         }
-        presentOverlay(shape: shape)
+        countdownValue = nil
+        countdownOverlay.dismiss()
     }
 
     private func presentOverlay(shape: CaptureShape) {
+        mainWindowWasVisible = isMainWindowVisible()
         isCapturing = true
+        requestHideMainWindow?()
         OverlayController.shared.begin(shape: shape) { [weak self] result in
             guard let self else { return }
             self.isCapturing = false
-            guard let result else { return }
+            guard let result else { self.requestRestoreMainWindow?(); return }
             self.lastResult = result
             Task { await self.handle(result) }
         }
@@ -168,14 +179,15 @@ final class AppState {
 
         if settings.playSound { NSSound(named: "Funk")?.play() }
 
-        // Surface the window only when configured to, when it's already open, or when the
-        // user asked to mark up. Otherwise the snip stays silent and we release the
-        // full-resolution bitmap — it remains available on disk via the history store.
-        if withMarkup || settings.showPreview == .always || isMainWindowVisible() {
+        // Surface the window only when configured to, when it was open before the capture,
+        // or when the user asked to mark up. Otherwise the snip stays silent and we release
+        // the full-resolution bitmap — it remains available on disk via the history store.
+        if withMarkup || settings.showPreview == .always || mainWindowWasVisible {
             requestShowMainWindow?()
         } else {
             currentImage = nil
             previewKind = nil
+            requestRestoreMainWindow?()
         }
     }
 
@@ -194,25 +206,73 @@ final class AppState {
 
     func beginRecording() {
         guard ensurePermission() else { return }
-        guard let screen = NSScreen.main else { return }
-        Task {
-            do {
-                let opts = RecordingEngine.Options(
-                    region: nil,
-                    displayID: screen.displayID,
-                    scale: screen.backingScaleFactor,
-                    showCursor: false,
-                    captureMicrophone: micEnabled,
-                    format: settings.videoFormat,
-                    quality: settings.videoQuality,
-                    fps: settings.frameRate.rawValue)
-                try await recorder.start(opts)
-                isRecording = true
-                startRecordingTimer()
-            } catch {
-                isRecording = false
-                present(error: error.localizedDescription)
+        guard !OverlayController.shared.isActive, !isCapturing else { return }
+        Task { await runRecordSession() }
+    }
+
+    /// Full-screen records the whole display; other shapes let the user pick the area to record.
+    private func runRecordSession() async {
+        if shape == .fullScreen {
+            guard let screen = NSScreen.main else { return }
+            await runCountdown(delay: timer.rawValue)
+            requestHideMainWindow?()
+            await startRecording(region: nil, windowID: nil,
+                                 displayID: screen.displayID, scale: screen.backingScaleFactor)
+            return
+        }
+        // Region / free-form / window: choose the area first, then count down, then record.
+        mainWindowWasVisible = isMainWindowVisible()
+        isCapturing = true
+        requestHideMainWindow?()
+        OverlayController.shared.begin(shape: shape) { [weak self] result in
+            guard let self else { return }
+            self.isCapturing = false
+            guard let result else { self.requestRestoreMainWindow?(); return }
+            Task {
+                await self.runCountdown(delay: self.timer.rawValue)
+                await self.startRecording(for: result)
             }
+        }
+    }
+
+    private func startRecording(for result: SelectionResult) async {
+        let scale = NSScreen.main?.backingScaleFactor ?? 2
+        switch result {
+        case .region(let rect, let screen, _):
+            await startRecording(region: rect.standardizedNonNegative, windowID: nil,
+                                 displayID: screen.displayID, scale: screen.backingScaleFactor)
+        case .freeform(_, let bounds, let screen, _):
+            await startRecording(region: bounds.standardizedNonNegative, windowID: nil,
+                                 displayID: screen.displayID, scale: screen.backingScaleFactor)
+        case .window(let window, _):
+            await startRecording(region: nil, windowID: window.windowID,
+                                 displayID: CGMainDisplayID(), scale: scale)
+        case .display(let screen, _):
+            await startRecording(region: nil, windowID: nil,
+                                 displayID: screen.displayID, scale: screen.backingScaleFactor)
+        }
+    }
+
+    private func startRecording(region: CGRect?, windowID: CGWindowID?,
+                                displayID: CGDirectDisplayID, scale: CGFloat) async {
+        do {
+            let opts = RecordingEngine.Options(
+                region: region,
+                windowID: windowID,
+                displayID: displayID,
+                scale: scale,
+                showCursor: false,
+                captureMicrophone: micEnabled,
+                format: settings.videoFormat,
+                quality: settings.videoQuality,
+                fps: settings.frameRate.rawValue)
+            try await recorder.start(opts)
+            isRecording = true
+            startRecordingTimer()
+        } catch {
+            isRecording = false
+            present(error: error.localizedDescription)
+            requestRestoreMainWindow?()
         }
     }
 
@@ -222,20 +282,34 @@ final class AppState {
         await recorder.stop()
     }
 
+    /// Stops and discards the in-progress recording (deletes the partial file).
+    func cancelRecording() {
+        cancellingRecording = true
+        Task { await recorder.stop() }
+    }
+
     func toggleRecording() {
         if isRecording { Task { await stopRecording() } } else { mode = .record; beginRecording() }
     }
 
+    private var cancellingRecording = false
+
     private func handleRecordingStopped(_ url: URL?) {
         isRecording = false
         stopRecordingTimer()
-        guard let url else { return }
+        if cancellingRecording {
+            cancellingRecording = false
+            if let url { try? FileManager.default.removeItem(at: url) }
+            requestRestoreMainWindow?()
+            return
+        }
+        guard let url else { requestRestoreMainWindow?(); return }
         currentVideoURL = url
         currentCaptureURL = url
         currentImage = nil
         previewKind = .video
         history.add(videoURL: url)
-        if settings.showPreview != .never { requestShowMainWindow?() }
+        if settings.showPreview != .never { requestShowMainWindow?() } else { requestRestoreMainWindow?() }
     }
 
     private func startRecordingTimer() {

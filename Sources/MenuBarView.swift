@@ -24,8 +24,9 @@ struct MenuBarView: View {
             VStack(spacing: 8) {
                 Image(nsImage: image)
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(maxWidth: .infinity, maxHeight: 160)
+                    .aspectRatio(image.size, contentMode: .fit)
+                    .frame(maxWidth: .infinity)
+                    .frame(maxHeight: 360)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.primary.opacity(0.12)))
 

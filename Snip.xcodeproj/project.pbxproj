@@ -28,6 +28,7 @@
 		AD33EFA36C6AE8D72FF4BC04 /* PreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1970C07A9DFE65E821FB7ABB /* PreviewView.swift */; };
 		BC01680FE48AA01BA7CFD419 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9261A76F7B1255E91A8EBDC /* MenuBarView.swift */; };
 		C19909A3F75CE399F75D0FDC /* GlassPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00EF9214F13A56DB227175F /* GlassPanel.swift */; };
+		C3A3ABF80BC72108C12DC6D8 /* RecordingControlBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 045D676A4A8D43588F946741 /* RecordingControlBar.swift */; };
 		C99B338ED521A82BCECF28FE /* EmptyStateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA05B7F73E67A7E38BAEB92 /* EmptyStateView.swift */; };
 		CB732C3294DD3AA2120687E3 /* RecordingEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06151F6CC5A67221B9CE8645 /* RecordingEngine.swift */; };
 		E59FD63F260149D86EA0865C /* Shortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 631F9536D7233C8282FA6169 /* Shortcuts.swift */; };
@@ -40,6 +41,7 @@
 		014BDAC8F7BAF64AE3FAE1B6 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		02DDFDC165C1A4F11CA223B4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		03A077E4981E9C90803BC100 /* Snip.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Snip.entitlements; sourceTree = "<group>"; };
+		045D676A4A8D43588F946741 /* RecordingControlBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingControlBar.swift; sourceTree = "<group>"; };
 		06151F6CC5A67221B9CE8645 /* RecordingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingEngine.swift; sourceTree = "<group>"; };
 		14299CA1408058CEFB90E7C8 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		1970C07A9DFE65E821FB7ABB /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
@@ -116,6 +118,7 @@
 				C9261A76F7B1255E91A8EBDC /* MenuBarView.swift */,
 				F32F91885A5B3932869C7033 /* OnboardingView.swift */,
 				DFD7E208B03878E6B6C8A824 /* OverlayWindow.swift */,
+				045D676A4A8D43588F946741 /* RecordingControlBar.swift */,
 				06151F6CC5A67221B9CE8645 /* RecordingEngine.swift */,
 				798132BD6423122B89CD77ED /* SelectionView.swift */,
 				03A077E4981E9C90803BC100 /* Snip.entitlements */,
@@ -256,6 +259,7 @@
 				129E1704087216DBC8E62C23 /* OnboardingView.swift in Sources */,
 				5261DB4810945A733E1FC53D /* OverlayWindow.swift in Sources */,
 				AD33EFA36C6AE8D72FF4BC04 /* PreviewView.swift in Sources */,
+				C3A3ABF80BC72108C12DC6D8 /* RecordingControlBar.swift in Sources */,
 				CB732C3294DD3AA2120687E3 /* RecordingEngine.swift in Sources */,
 				55D443814E0E14BCFB7DDC38 /* SelectionView.swift in Sources */,
 				2BF1311A5074F7C30BCD98FE /* SettingsView.swift in Sources */,

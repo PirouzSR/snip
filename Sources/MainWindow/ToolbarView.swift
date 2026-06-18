@@ -15,10 +15,9 @@ struct ToolbarView: View {
 
             ModeSegments(mode: $state.mode)
 
-            if state.mode == .snip {
-                ShapeMenu(shape: $state.shape)
-                TimerMenu(timer: $state.timer)
-            } else {
+            ShapeMenu(shape: $state.shape)
+            TimerMenu(timer: $state.timer)
+            if state.mode == .record {
                 MicToggle(state: state)
             }
 
@@ -170,12 +169,26 @@ private struct TimerMenu: View {
 
 private struct MicToggle: View {
     @Bindable var state: AppState
+    @State private var hovering = false
 
     var body: some View {
         Button { state.micEnabled.toggle() } label: {
-            PillLabel(systemImage: state.micEnabled ? "mic.fill" : "mic.slash")
+            Image(systemName: state.micEnabled ? "mic.fill" : "mic.slash")
+                .font(.system(size: 12))
+                .padding(.horizontal, 10).frame(height: 28)
+                .foregroundStyle(state.micEnabled ? Color.white : Color.secondary)
+                .background {
+                    if state.micEnabled {
+                        Capsule().fill(Color.accentColor)
+                    } else {
+                        Capsule().fill(hovering ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(.ultraThinMaterial))
+                    }
+                }
+                .overlay(Capsule().strokeBorder(.primary.opacity(0.15), lineWidth: 0.5))
         }
         .buttonStyle(.plain)
+        .onHover { hovering = $0 }
+        .help(state.micEnabled ? "Microphone on — click to mute" : "Microphone off — click to enable")
         .accessibilityLabel(state.micEnabled ? "Microphone on" : "Microphone off")
     }
 }
