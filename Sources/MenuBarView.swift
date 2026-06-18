@@ -75,10 +75,10 @@ struct MenuBarView: View {
                 dismiss(); state.requestShowMainWindow?()
             }
             MenuRow(title: "Capture History", symbol: "clock") {
-                dismiss(); (NSApp.delegate as? AppDelegate)?.showHistoryWindow()
+                dismiss(); AppDelegate.shared?.showHistoryWindow()
             }
             MenuRow(title: "Settings…", symbol: "gearshape", shortcut: "⌘,") {
-                dismiss(); (NSApp.delegate as? AppDelegate)?.openSettingsWindow()
+                dismiss(); AppDelegate.shared?.openSettingsWindow()
             }
             Divider().padding(.vertical, 3)
             MenuRow(title: "Quit Snip", symbol: "power") { NSApp.terminate(nil) }

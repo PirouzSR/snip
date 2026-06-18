@@ -11,7 +11,7 @@ struct SettingsView: View {
                 .tabItem { Label("Shortcuts", systemImage: "keyboard") }
             OutputPane(settings: state.settings)
                 .tabItem { Label("Output", systemImage: "square.and.arrow.down") }
-            BehaviorPane(settings: state.settings)
+            BehaviorPane(settings: state.settings, state: state)
                 .tabItem { Label("Behavior", systemImage: "camera") }
             HistoryPane(settings: state.settings, history: state.history)
                 .tabItem { Label("History", systemImage: "clock") }
@@ -37,7 +37,7 @@ struct GeneralPane: View {
                 ForEach(MenuBarPresence.allCases) { Text($0.title).tag($0) }
             }
             .onChange(of: settings.menuBarPresence) { _, _ in
-                (NSApp.delegate as? AppDelegate)?.applyActivationPolicy()
+                AppDelegate.shared?.applyActivationPolicy()
             }
         }
         .formStyle(.grouped)
@@ -108,6 +108,7 @@ struct OutputPane: View {
 
 struct BehaviorPane: View {
     @Bindable var settings: AppSettings
+    var state: AppState
 
     var body: some View {
         Form {
@@ -117,9 +118,11 @@ struct BehaviorPane: View {
             Picker("Default capture shape", selection: $settings.defaultShape) {
                 ForEach(CaptureShape.allCases) { Text($0.title).tag($0) }
             }
+            .onChange(of: settings.defaultShape) { _, newValue in state.shape = newValue }
             Picker("Default timer delay", selection: $settings.defaultTimer) {
                 ForEach(TimerDelay.allCases) { Text($0.title).tag($0) }
             }
+            .onChange(of: settings.defaultTimer) { _, newValue in state.timer = newValue }
             Toggle("Play sound on capture", isOn: $settings.playSound)
             Picker("Show preview after capture", selection: $settings.showPreview) {
                 ForEach(ShowPreviewPolicy.allCases) { Text($0.title).tag($0) }

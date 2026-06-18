@@ -10,6 +10,7 @@ final class AppState {
     let settings = AppSettings.shared
     let history = HistoryStore.shared
     let recorder = RecordingEngine()
+    private let countdownOverlay = CountdownOverlay()
 
     var mode: CaptureMode = .snip
     var shape: CaptureShape
@@ -88,11 +89,14 @@ final class AppState {
 
     private func runCountdownThenOverlay(shape: CaptureShape, delay: Int) async {
         if delay > 0 {
+            countdownOverlay.begin(style: settings.countdownStyle, seconds: delay)
             for remaining in stride(from: delay, through: 1, by: -1) {
                 countdownValue = remaining
+                countdownOverlay.update(seconds: remaining)
                 try? await Task.sleep(for: .seconds(1))
             }
             countdownValue = nil
+            countdownOverlay.dismiss()
         }
         presentOverlay(shape: shape)
     }

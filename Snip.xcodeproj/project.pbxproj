@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		09B35B818D7A5C172FE2B36E /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A10563C4502D0A97E9BF431 /* HistoryView.swift */; };
+		0CCD41EE2D65F91D25C3B458 /* CountdownOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2025043AFD3D5265C946A0BE /* CountdownOverlay.swift */; };
 		0E21C2E3265F2BE0B45CE618 /* LoginItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78641A1091126C9C88161364 /* LoginItem.swift */; };
 		129E1704087216DBC8E62C23 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32F91885A5B3932869C7033 /* OnboardingView.swift */; };
 		1491698F10846F1EB6A75BD0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B21EDBC04F9A03A3746021C5 /* AppDelegate.swift */; };
@@ -42,6 +43,7 @@
 		06151F6CC5A67221B9CE8645 /* RecordingEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingEngine.swift; sourceTree = "<group>"; };
 		14299CA1408058CEFB90E7C8 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		1970C07A9DFE65E821FB7ABB /* PreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewView.swift; sourceTree = "<group>"; };
+		2025043AFD3D5265C946A0BE /* CountdownOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownOverlay.swift; sourceTree = "<group>"; };
 		2609DD31F72CA9C1711AC348 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		27DB4D0D8A11B8CE98E38127 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		377C2F69BFC969B2EAD6109A /* CaptureEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureEngine.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				27DB4D0D8A11B8CE98E38127 /* AppState.swift */,
 				02DDFDC165C1A4F11CA223B4 /* Assets.xcassets */,
 				377C2F69BFC969B2EAD6109A /* CaptureEngine.swift */,
+				2025043AFD3D5265C946A0BE /* CountdownOverlay.swift */,
 				2609DD31F72CA9C1711AC348 /* Info.plist */,
 				C9261A76F7B1255E91A8EBDC /* MenuBarView.swift */,
 				F32F91885A5B3932869C7033 /* OnboardingView.swift */,
@@ -239,6 +242,7 @@
 				9E48C037E731B8C311D4D0F3 /* AppSettings.swift in Sources */,
 				4C63C1E924F6E39A1D0197D7 /* AppState.swift in Sources */,
 				F92AEA0224993320E8487F09 /* CaptureEngine.swift in Sources */,
+				0CCD41EE2D65F91D25C3B458 /* CountdownOverlay.swift in Sources */,
 				C99B338ED521A82BCECF28FE /* EmptyStateView.swift in Sources */,
 				5494105688B0AC875B47BE68 /* Extensions.swift in Sources */,
 				C19909A3F75CE399F75D0FDC /* GlassPanel.swift in Sources */,

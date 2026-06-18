@@ -4,18 +4,24 @@ import KeyboardShortcuts
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    /// The live delegate instance. `NSApp.delegate as? AppDelegate` is unreliable from some
+    /// SwiftUI contexts (e.g. `.commands`), so menus route through this instead.
+    static private(set) weak var shared: AppDelegate?
+
     let appState = AppState()
 
     private var mainPanel: GlassPanel<MainWindowRoot>?
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
     private var historyWindow: NSWindow?
+    private var settingsWindow: NSWindow?
 
     private let compactHeight: CGFloat = 116
     private let expandedHeight: CGFloat = 420
     private let windowWidth: CGFloat = 540
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        AppDelegate.shared = self
         appState.settings.applyAppearance()
         applyActivationPolicy()
 
@@ -33,6 +39,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             showOnboarding()
         }
+
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -144,10 +151,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: Settings
 
+    /// AppDelegate-owned settings window. Reliable from any caller (the SwiftUI
+    /// `showSettingsWindow:` action was flaky from the in-app menu), and explicitly
+    /// raised above the floating main panel so it can't open hidden behind it.
     func openSettingsWindow() {
+        if settingsWindow == nil {
+            let hosting = NSHostingController(rootView: SettingsView().environment(appState))
+            let window = NSWindow(contentViewController: hosting)
+            window.title = "Snip Settings"
+            window.styleMask = [.titled, .closable, .miniaturizable]
+            window.isReleasedWhenClosed = false
+            window.setContentSize(NSSize(width: 520, height: 460))
+            window.center()
+            settingsWindow = window
+        }
+        // Sit at the same level as the main panel so "keep on top" never hides it.
+        settingsWindow?.level = (mainPanel?.level == .floating) ? .floating : .normal
+        settingsWindow?.makeKeyAndOrderFront(nil)
+        settingsWindow?.orderFrontRegardless()
         NSApp.activate(ignoringOtherApps: true)
-        // Opens the SwiftUI `Settings` scene. Requires the app to be active.
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
     }
 
     // MARK: History window

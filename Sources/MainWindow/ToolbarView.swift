@@ -187,9 +187,9 @@ private struct OverflowMenu: View {
 
     var body: some View {
         Menu {
-            Button("Open Settings") { (NSApp.delegate as? AppDelegate)?.openSettingsWindow() }
+            Button("Open Settings") { AppDelegate.shared?.openSettingsWindow() }
                 .keyboardShortcut(",", modifiers: .command)
-            Button("Capture History") { (NSApp.delegate as? AppDelegate)?.showHistoryWindow() }
+            Button("Capture History") { AppDelegate.shared?.showHistoryWindow() }
             Button("Copy Last Capture") { state.copyLastCapture() }
             Button("Open Last Capture") { state.openLastCapture() }
             Divider()
