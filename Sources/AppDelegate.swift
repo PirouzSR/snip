@@ -214,6 +214,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        // Use a stable autosave name so the item's persisted slot is deterministic. Without
+        // one, macOS assigns a generated name ("Item-0") and silently auto-persists this
+        // item's visibility under it.
+        item.autosaveName = "SnipStatusItem"
         if let button = item.button {
             button.image = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: "Snip")
             button.image?.isTemplate = true
@@ -221,6 +225,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             button.target = self
         }
         statusItem = item
+        updateStatusItemVisibility()
+        observeMenuBarPresence()
+    }
+
+    /// Shows the menu-bar icon unless the user chose Dock-only.
+    ///
+    /// Crucially this force-sets `isVisible`: macOS auto-persists a status item's visibility,
+    /// so a stale "hidden" value — written when the menu bar overflows on a notched Mac, or
+    /// when the icon is ⌘-dragged off — otherwise suppresses the icon on every subsequent
+    /// launch with no way for the user to recover it. Re-asserting the intended value each
+    /// launch makes the menu-bar presence self-healing.
+    private func updateStatusItemVisibility() {
+        statusItem?.isVisible = appState.settings.menuBarPresence != .dockOnly
+    }
+
+    /// Re-applies status-item visibility whenever the Menu Bar / Dock presence changes.
+    private func observeMenuBarPresence() {
+        withObservationTracking {
+            _ = appState.settings.menuBarPresence
+        } onChange: { [weak self] in
+            Task { @MainActor in
+                self?.updateStatusItemVisibility()
+                self?.observeMenuBarPresence()
+            }
+        }
     }
 
     @objc private func togglePopover() {
